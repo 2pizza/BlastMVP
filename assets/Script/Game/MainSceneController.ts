@@ -77,11 +77,42 @@ export class MainSceneController extends cc.Component {
     private boardHeight: number = 9;
 
     protected override onLoad(): void {
-        this.boardWidth = this.Clamp(this.defaultBoardWidth, this.minBoardSize, this.maxBoardSize);
-        this.boardHeight = this.Clamp(this.defaultBoardHeight, this.minBoardSize, this.maxBoardSize);
+        this.InitState();
 
         this.SubscribeEvents();
         this.RefreshBoardSize();
+    }
+
+    private InitState(): void {
+        const config = LevelRuntimeConfigStore.GetConfig(this.CreateDefaultConfig());
+
+        this.boardWidth = this.Clamp(config.width, this.minBoardSize, this.maxBoardSize);
+        this.boardHeight = this.Clamp(config.height, this.minBoardSize, this.maxBoardSize);
+
+        this.SetEditBoxValue(this.targetScoreInput, config.targetScore);
+        this.SetEditBoxValue(this.turnsInput, config.moveLimit);
+        this.SetEditBoxValue(this.shuffleLimitInput, config.shuffleAttemptLimit);
+        this.SetEditBoxValue(this.bombInput, config.bombBoosterCount);
+        this.SetEditBoxValue(this.swapInput, config.swapBoosterCount);
+
+        this.SetSelectedColorCount(config.colorCount);
+        this.SetSelectedMinGroupSize(config.minGroupSize);
+
+        LevelRuntimeConfigStore.SetConfig(config);
+    }
+
+    private CreateDefaultConfig(): LevelRuntimeConfig {
+        return {
+            width: this.Clamp(this.defaultBoardWidth, this.minBoardSize, this.maxBoardSize),
+            height: this.Clamp(this.defaultBoardHeight, this.minBoardSize, this.maxBoardSize),
+            colorCount: 5,
+            targetScore: this.ReadPositiveInt(this.targetScoreInput, 1500),
+            moveLimit: this.ReadPositiveInt(this.turnsInput, 25),
+            minGroupSize: 2,
+            shuffleAttemptLimit: this.ReadNonNegativeInt(this.shuffleLimitInput, 3),
+            bombBoosterCount: this.ReadNonNegativeInt(this.bombInput, 0),
+            swapBoosterCount: this.ReadNonNegativeInt(this.swapInput, 0),
+        };
     }
 
     private SubscribeEvents(): void {
@@ -221,5 +252,45 @@ export class MainSceneController extends cc.Component {
         }
 
         button.node.on(cc.Node.EventType.TOUCH_END, callback, this);
+    }
+
+    private SetEditBoxValue(input: cc.EditBox, value: number): void {
+        if (input === null) {
+            return;
+        }
+
+        input.string = value.toString();
+    }
+
+    private SetSelectedColorCount(colorCount: number): void {
+        const value = this.Clamp(colorCount, 3, 5);
+
+        if (this.colors3Toggle !== null) {
+            this.colors3Toggle.isChecked = value === 3;
+        }
+
+        if (this.colors4Toggle !== null) {
+            this.colors4Toggle.isChecked = value === 4;
+        }
+
+        if (this.colors5Toggle !== null) {
+            this.colors5Toggle.isChecked = value === 5;
+        }
+    }
+
+    private SetSelectedMinGroupSize(minGroupSize: number): void {
+        const value = this.Clamp(minGroupSize, 2, 4);
+
+        if (this.groupSize2Toggle !== null) {
+            this.groupSize2Toggle.isChecked = value === 2;
+        }
+
+        if (this.groupSize3Toggle !== null) {
+            this.groupSize3Toggle.isChecked = value === 3;
+        }
+
+        if (this.groupSize4Toggle !== null) {
+            this.groupSize4Toggle.isChecked = value === 4;
+        }
     }
 }
