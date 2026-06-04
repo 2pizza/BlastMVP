@@ -7,7 +7,7 @@
     "upsideDown": false
   },
   "packageName": "org.cocos2d.helloworld",
-  "startScene": "2d2f792f-a40c-49bb-a189-ed176a246e49",
+  "startScene": "7e2ea42e-692a-42a6-92d4-3779922bd73c",
   "title": "BlastMVP",
   "webOrientation": "auto",
   "inlineSpriteFrames": true,

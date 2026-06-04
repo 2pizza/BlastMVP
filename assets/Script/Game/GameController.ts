@@ -4,6 +4,7 @@ import { TopHudView } from "../View/HUD/TopHudView";
 import { ResultPopupView } from "../View/HUD/ResultPopupView";
 import { ShuffleHintView } from "../View/HUD/ShuffleHintView";
 import { BoosterButtonView } from "../View/HUD/BoosterButtonView";
+import { LevelRuntimeConfig, LevelRuntimeConfigStore } from "../Core/LevelRuntimeConfig";
 
 enum BoosterInputMode {
     None = 0,
@@ -65,6 +66,11 @@ export class GameController extends cc.Component {
     @property
     private swapBoosterCount: number = 3;
 
+    @property
+    private mainSceneName: string = "MainScene";
+
+    private currentLevelConfig: LevelRuntimeConfig = null;
+
     private game: GameModel = null;
     private inputLocked: boolean = false;
 
@@ -80,26 +86,34 @@ export class GameController extends cc.Component {
         if (this.inputRoot !== null) {
             this.inputRoot.on(cc.Node.EventType.TOUCH_END, this.OnGlobalTouchEnd, this, true);
         }
-
-        this.currentBombBoosterCount = this.bombBoosterCount;
-        this.currentSwapBoosterCount = this.swapBoosterCount;
     }
 
     protected override start(): void {
-        this.CreateGame();
+        this.StartGameSession();
+    }
 
+    private StartGameSession(): void {
+        this.currentLevelConfig = LevelRuntimeConfigStore.GetConfig(this.CreateDefaultLevelConfig());
+
+        this.currentBombBoosterCount = this.currentLevelConfig.bombBoosterCount;
+        this.currentSwapBoosterCount = this.currentLevelConfig.swapBoosterCount;
+
+        this.CreateGame();
         this.UpdateBoostersHud();
     }
 
-    protected override onDestroy(): void {
-        if (this.inputRoot !== null) {
-            this.inputRoot.off(
-                cc.Node.EventType.TOUCH_END,
-                this.OnGlobalTouchEnd,
-                this,
-                true
-            );
-        }
+    private CreateDefaultLevelConfig(): LevelRuntimeConfig {
+        return {
+            width: this.width,
+            height: this.height,
+            colorCount: this.colorCount,
+            targetScore: this.targetScore,
+            moveLimit: this.moveLimit,
+            minGroupSize: this.minGroupSize,
+            shuffleAttemptLimit: this.shuffleAttemptLimit,
+            bombBoosterCount: this.bombBoosterCount,
+            swapBoosterCount: this.swapBoosterCount,
+        };
     }
 
     private OnGlobalTouchEnd(event: cc.Event.EventTouch): void {
@@ -133,19 +147,27 @@ export class GameController extends cc.Component {
             return;
         }
 
+        if (this.currentLevelConfig === null) {
+            this.currentLevelConfig = this.CreateDefaultLevelConfig();
+        }
+
         const config: GameConfig = {
-            width: this.width,
-            height: this.height,
-            colorCount: this.colorCount,
-            targetScore: this.targetScore,
-            moveLimit: this.moveLimit,
-            minGroupSize: this.minGroupSize,
+            width: this.currentLevelConfig.width,
+            height: this.currentLevelConfig.height,
+            colorCount: this.currentLevelConfig.colorCount,
+            targetScore: this.currentLevelConfig.targetScore,
+            moveLimit: this.currentLevelConfig.moveLimit,
+            minGroupSize: this.currentLevelConfig.minGroupSize,
         };
 
         this.game = new GameModel(config);
 
         if (this.resultPopupView !== null) {
-            this.resultPopupView.Init(this.RestartGame.bind(this));
+            this.resultPopupView.Init(
+                this.RestartGame.bind(this),
+                this.ExitToMainScene.bind(this)
+            );
+
             this.resultPopupView.Hide();
         }
 
@@ -394,6 +416,10 @@ export class GameController extends cc.Component {
         this.ResolveNoAvailableMoves(0);
     }
 
+    private ExitToMainScene(): void {
+        cc.director.loadScene(this.mainSceneName);
+    }
+
     private OnBoardAnimationComplete(result: MoveResult): void {
         this.UpdateHud();
 
@@ -416,7 +442,7 @@ export class GameController extends cc.Component {
             return;
         }
 
-        if (attempt >= this.shuffleAttemptLimit) {
+        if (attempt >= this.currentLevelConfig.shuffleAttemptLimit) {
             this.inputLocked = true;
             this.game.MarkDefeatNoAvailableGroups();
             this.HandleGameState(this.game.GetState());
@@ -512,7 +538,7 @@ export class GameController extends cc.Component {
 
         this.topHudView.SetMovesLeft(this.game.GetMovesLeft());
         this.topHudView.SetScore(this.game.GetScore());
-        this.topHudView.SetTargetScore(this.targetScore);
+        this.topHudView.SetTargetScore(this.currentLevelConfig.targetScore);
     }
 
     private UpdateBoostersHud(): void {

@@ -17,29 +17,30 @@ export class ResultPopupView extends cc.Component {
     @property(cc.Button)
     private restartButton: cc.Button = null;
 
+    @property(cc.Button)
+    private exitButton: cc.Button = null;
+
     @property
     private overlayOpacity: number = 150;
 
     private restartCallback: () => void = null;
+    private exitCallback: () => void = null;
 
     protected onLoad(): void {
         if (this.restartButton !== null) {
             this.restartButton.node.on(cc.Node.EventType.TOUCH_END, this.OnRestartClicked, this);
         }
 
+        if (this.exitButton !== null) {
+            this.exitButton.node.on(cc.Node.EventType.TOUCH_END, this.OnExitClicked, this);
+        }
+
         cc.view.on("canvas-resize", this.ResizeOverlay, this);
     }
 
-    protected onDestroy(): void {
-        if (this.restartButton !== null) {
-            this.restartButton.node.off(cc.Node.EventType.TOUCH_END, this.OnRestartClicked, this);
-        }
-
-        cc.view.off("canvas-resize", this.ResizeOverlay, this);
-    }
-
-    public Init(onRestart: () => void): void {
+    public Init(onRestart: () => void, onExit: () => void): void {
         this.restartCallback = onRestart;
+        this.exitCallback = onExit;
         this.ResizeOverlay();
     }
 
@@ -109,5 +110,13 @@ export class ResultPopupView extends cc.Component {
         }
 
         this.restartCallback();
+    }
+
+    private OnExitClicked(): void {
+        if (this.exitCallback === null) {
+            return;
+        }
+
+        this.exitCallback();
     }
 }
