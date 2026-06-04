@@ -3,6 +3,15 @@ import { SpecialTileType } from "../../Core/TileModel";
 import { SpecialTileAnimationHost, SpecialTileViewLogic } from "./SpecialTileViewLogic";
 
 export class BombSpecialTileViewLogic implements SpecialTileViewLogic {
+
+    private explosionKickDuration: number = 0.14;
+    
+    private explosionFlyToScoreDuration: number = 0.28;
+    
+    private explosionCollapseDuration: number = 0.1;
+   
+    private explosionKickDistanceMultiplier: number = 0.35;
+
     public PlayRemoveAnimation(host: SpecialTileAnimationHost, turn: TurnResult, onComplete: () => void): void {
         const explosionTiles: RemovedTile[] = [];
         const defaultTiles: RemovedTile[] = [];
@@ -32,7 +41,12 @@ export class BombSpecialTileViewLogic implements SpecialTileViewLogic {
         host.PlayDefaultRemoveAnimation(defaultTiles, completePart);
     }
 
-    private PlayExplosionRemoveAnimation(host: SpecialTileAnimationHost, turn: TurnResult, removedTiles: RemovedTile[], onComplete: () => void): void {
+    private PlayExplosionRemoveAnimation(
+        host: SpecialTileAnimationHost,
+        turn: TurnResult,
+        removedTiles: RemovedTile[],
+        onComplete: () => void
+    ): void {
         if (removedTiles.length <= 0) {
             onComplete();
             return;
@@ -50,6 +64,8 @@ export class BombSpecialTileViewLogic implements SpecialTileViewLogic {
         }
 
         const explosionCenter = host.GetCellPositionForAnimation(turn.sourceX, turn.sourceY);
+        const scoreTargetPosition = host.GetScoreFlyTargetPositionForAnimation(layer);
+
         let completedCount = 0;
 
         for (let i = 0; i < removedTiles.length; i++) {
@@ -67,32 +83,33 @@ export class BombSpecialTileViewLogic implements SpecialTileViewLogic {
             }
 
             const node = tileView.node;
+
             host.MoveNodeToLayerKeepingWorldPosition(node, layer);
 
             const tilePosition = host.GetCellPositionForAnimation(removed.x, removed.y);
-
-            let directionX = tilePosition.x - explosionCenter.x;
-            let directionY = tilePosition.y - explosionCenter.y;
-
-            const length = Math.sqrt(directionX * directionX + directionY * directionY);
-
-            if (length > 0.001) {
-                directionX /= length;
-                directionY /= length;
-            } else {
-                const angle = Math.random() * Math.PI * 2;
-                directionX = Math.cos(angle);
-                directionY = Math.sin(angle);
-            }
-
-            const targetPosition = this.GetExplosionTargetPositionForAnimation(node, directionX, directionY, layer);
+            const direction = this.GetExplosionDirection(tilePosition, explosionCenter);
+            const kickTargetPosition = this.GetExplosionKickPosition(node, direction.x, direction.y);
 
             cc.tween(node)
-                .to(0.22, {
-                    x: targetPosition.x,
-                    y: targetPosition.y,
+                .to(this.explosionKickDuration, {
+                    x: kickTargetPosition.x,
+                    y: kickTargetPosition.y,
+                    angle: node.angle + 180,
+                }, {
+                    easing: "quadOut",
+                })
+                .to(this.explosionFlyToScoreDuration, {
+                    x: scoreTargetPosition.x,
+                    y: scoreTargetPosition.y,
                     angle: node.angle + 360,
+                }, {
+                    easing: "quadInOut",
+                })
+                .to(this.explosionCollapseDuration, {
+                    scale: 0,
                     opacity: 0,
+                }, {
+                    easing: "quadIn",
                 })
                 .call(() => {
                     host.RemoveTileViewById(removed.tileId);
@@ -108,16 +125,39 @@ export class BombSpecialTileViewLogic implements SpecialTileViewLogic {
         }
     }
 
-    private GetExplosionTargetPositionForAnimation(node: cc.Node, directionX: number, directionY: number, layer: cc.Node): cc.Vec3 
-    {
+    private GetExplosionDirection(tilePosition: cc.Vec3, explosionCenter: cc.Vec3): cc.Vec2 {
+        let directionX = tilePosition.x - explosionCenter.x;
+        let directionY = tilePosition.y - explosionCenter.y;
+
+        const length = Math.sqrt(directionX * directionX + directionY * directionY);
+
+        if (length > 0.001) {
+            directionX /= length;
+            directionY /= length;
+        } else {
+            const angle = Math.random() * Math.PI * 2;
+
+            directionX = Math.cos(angle);
+            directionY = Math.sin(angle);
+        }
+
+        return cc.v2(directionX, directionY);
+    }
+
+    private GetExplosionKickPosition(node: cc.Node, directionX: number, directionY: number): cc.Vec3 {
+        const distance = this.GetExplosionKickDistance();
+
+        return cc.v3(
+            node.x + directionX * distance,
+            node.y + directionY * distance,
+            node.z
+        );
+    }
+
+    private GetExplosionKickDistance(): number {
         const visibleSize = cc.view.getVisibleSize();
-        const distance = Math.max(visibleSize.width, visibleSize.height) * 1.5;
-        const worldStart = layer.convertToWorldSpaceAR(node.position);
+        const baseDistance = Math.min(visibleSize.width, visibleSize.height);
 
-        const worldTarget = cc.v2(worldStart.x + directionX * distance, worldStart.y + directionY * distance);
-
-        const localTarget = layer.convertToNodeSpaceAR(worldTarget);
-
-        return cc.v3(localTarget.x, localTarget.y, 0);
+        return baseDistance * this.explosionKickDistanceMultiplier;
     }
 }

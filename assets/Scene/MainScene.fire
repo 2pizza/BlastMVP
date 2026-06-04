@@ -4770,7 +4770,7 @@
       "__id__": 92
     },
     "minValue": 1,
-    "maxValue": 9999,
+    "maxValue": 99999999,
     "defaultValue": 100,
     "_id": "cfLqSo9WpBpYpf94x4495X"
   },
@@ -6044,7 +6044,7 @@
     "_enabled": true,
     "_string": "",
     "returnType": 0,
-    "maxLength": 8,
+    "maxLength": 4,
     "_tabIndex": 0,
     "editingDidBegan": [],
     "textChanged": [],
@@ -6060,7 +6060,7 @@
       "__id__": 114
     },
     "_N$inputFlag": 5,
-    "_N$inputMode": 6,
+    "_N$inputMode": 2,
     "_N$stayOnTop": false,
     "_id": "50jPaNE2NBZoAuJdyMWrAY"
   },
@@ -8497,7 +8497,7 @@
     "_enabled": true,
     "_string": "2",
     "returnType": 0,
-    "maxLength": 8,
+    "maxLength": 4,
     "_tabIndex": 0,
     "editingDidBegan": [],
     "textChanged": [],
@@ -8513,7 +8513,7 @@
       "__id__": 164
     },
     "_N$inputFlag": 5,
-    "_N$inputMode": 6,
+    "_N$inputMode": 2,
     "_N$stayOnTop": false,
     "_id": "6fI45QrzZF17qQlNI3QVSj"
   },
@@ -9152,7 +9152,7 @@
     "_enabled": true,
     "_string": "2",
     "returnType": 0,
-    "maxLength": 8,
+    "maxLength": 4,
     "_tabIndex": 0,
     "editingDidBegan": [],
     "textChanged": [],
@@ -9168,7 +9168,7 @@
       "__id__": 179
     },
     "_N$inputFlag": 5,
-    "_N$inputMode": 6,
+    "_N$inputMode": 2,
     "_N$stayOnTop": false,
     "_id": "6ft/5QUC1AH7hicVyOFpur"
   },

@@ -8,6 +8,7 @@ export interface SpecialTileAnimationHost {
     GetTileAnimationLayer(): cc.Node | null;
     MoveNodeToLayerKeepingWorldPosition(node: cc.Node, layer: cc.Node): void;
     PlayDefaultRemoveAnimation(removedTiles: RemovedTile[], onComplete: () => void): void;
+    GetScoreFlyTargetPositionForAnimation(layer: cc.Node): cc.Vec3
 }
 
 export interface SpecialTileViewLogic {

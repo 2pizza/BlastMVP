@@ -23,6 +23,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
 
     @property(cc.Node)
     private boardMask: cc.Node = null;
+    
 
     @property
     private referenceColumns: number = 9;
@@ -50,6 +51,14 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
 
     @property
     private moveDuration: number = 0.18;
+
+    @property(cc.Node)
+    private scoreFlyTarget: cc.Node = null;
+
+    @property
+    private scoreFlyDuration: number = 0.35;
+    @property
+    private scoreFlyCollapseDuration: number = 0.12;
     
 
     private board: BoardModel = null;
@@ -147,6 +156,22 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
             x: x,
             y: y,
         };
+    }
+
+    public GetScoreFlyTargetPositionForAnimation(layer: cc.Node): cc.Vec3 {
+        if (layer === null) {
+            return cc.v3(0, 0, 0);
+        }
+
+        if (this.scoreFlyTarget === null || this.scoreFlyTarget.parent === null) {
+            return cc.v3(0, 0, 0);
+        }
+
+        const worldTargetPosition = this.scoreFlyTarget.parent.convertToWorldSpaceAR(this.scoreFlyTarget.position);
+
+        const localTargetPosition = layer.convertToNodeSpaceAR(worldTargetPosition);
+
+        return cc.v3(localTargetPosition.x, localTargetPosition.y, 0);
     }
 
     public SetTileSelected(x: number, y: number, selected: boolean): void {
@@ -247,12 +272,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         }
     }
 
-    private CreateTileViewFromModel(
-        tile: TileModel,
-        boardX: number,
-        boardY: number,
-        visualY: number
-    ): TileView {
+    private CreateTileViewFromModel(tile: TileModel, boardX: number, boardY: number, visualY: number): TileView {
         if (this.boardRoot === null) {
             cc.error("BoardView: boardRoot is not assigned");
             return null;
@@ -310,6 +330,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
             return;
         }
 
+        cc.log("PlayTurnRemoveAnimation1");
         this.PlayDefaultRemoveAnimation(turn.removedTiles, onComplete);
     }
 
@@ -319,40 +340,73 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
             return;
         }
 
-        let completedCount = 0;
-
         for (let i = 0; i < removedTiles.length; i++) {
             const removed = removedTiles[i];
             const tileView = this.tileViewsById[removed.tileId];
 
             if (tileView === undefined || tileView === null) {
-                completedCount++;
-
-                if (completedCount >= removedTiles.length) {
-                    onComplete();
-                }
-
                 continue;
             }
 
-            cc.tween(tileView.node)
-                .to(this.removeDuration, {
-                    scale: 0,
-                    opacity: 0,
-                })
-                .call(() => {
-                    delete this.tileViewsById[removed.tileId];
-                    tileView.node.destroy();
+            if (removed.specialType === SpecialTileType.None) {
+                this.PlayScoreFlyClone(tileView.node, i * 0.02);
+            }
 
-                    completedCount++;
-
-                    if (completedCount >= removedTiles.length) {
-                        onComplete();
-                    }
-                })
-                .start();
+            delete this.tileViewsById[removed.tileId];
+            tileView.node.destroy();
         }
+
+        onComplete();
     }
+
+    private PlayScoreFlyClone(sourceNode: cc.Node, delay: number): void {
+        if (this.scoreFlyTarget === null || this.scoreFlyTarget.parent === null) {
+            return;
+        }
+
+        const layer = this.GetTileAnimationLayer();
+
+        if (layer === null) {
+            return;
+        }
+
+        const clone = cc.instantiate(sourceNode);
+
+        clone.parent = layer;
+        clone.active = true;
+        clone.opacity = sourceNode.opacity;
+        clone.scale = sourceNode.scale;
+
+        const worldStartPosition = sourceNode.parent.convertToWorldSpaceAR(sourceNode.position);
+        const localStartPosition = layer.convertToNodeSpaceAR(worldStartPosition);
+
+        clone.setPosition(localStartPosition);
+
+        const worldTargetPosition = this.scoreFlyTarget.parent.convertToWorldSpaceAR(
+            this.scoreFlyTarget.position
+        );
+
+        const localTargetPosition = layer.convertToNodeSpaceAR(worldTargetPosition);
+
+        cc.tween(clone)
+            .delay(delay)
+            .to(this.scoreFlyDuration, {
+                x: localTargetPosition.x,
+                y: localTargetPosition.y,
+            }, {
+                easing: "quadOut",
+            })
+            .to(this.scoreFlyCollapseDuration, {
+                scale: 0,
+                opacity: 0,
+            }, {
+                easing: "quadIn",
+            })
+            .call(() => {
+                clone.destroy();
+            })
+            .start();
+            }
 
     private PlayMoveAnimation(movedTiles: MovedTile[], onComplete: () => void): void {
         if (movedTiles.length <= 0) {

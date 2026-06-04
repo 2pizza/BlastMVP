@@ -225,6 +225,10 @@
     "cellSize": 100,
     "removeDuration": 0.12,
     "moveDuration": 0.18,
+    "scoreFlyTarget": {
+      "__id__": 48
+    },
+    "scoreFlyDuration": 0.35,
     "_id": "74evtQ0nNLxL+/k6m8sc79"
   },
   {
