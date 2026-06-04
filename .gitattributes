@@ -43,3 +43,7 @@
 *.ts text eol=lf
 *.js text eol=lf
 *.md text eol=lf
+
+# GitHub Pages build output should be committed as regular files.
+# GitHub Pages branch deployment does not reliably serve Git LFS assets.
+docs/** -filter -diff -merge text
