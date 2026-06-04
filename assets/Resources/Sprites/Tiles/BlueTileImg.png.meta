@@ -1,0 +1,38 @@
+{
+  "ver": "2.3.7",
+  "uuid": "e099f44b-60bb-4ea9-93e6-a318e1f83956",
+  "importer": "texture",
+  "type": "sprite",
+  "wrapMode": "clamp",
+  "filterMode": "bilinear",
+  "premultiplyAlpha": false,
+  "genMipmaps": false,
+  "packable": true,
+  "width": 100,
+  "height": 112,
+  "platformSettings": {},
+  "subMetas": {
+    "BlueTileImg": {
+      "ver": "1.0.6",
+      "uuid": "1e0a6433-c79f-40b4-a568-f34ca9c7664e",
+      "importer": "sprite-frame",
+      "rawTextureUuid": "e099f44b-60bb-4ea9-93e6-a318e1f83956",
+      "trimType": "auto",
+      "trimThreshold": 1,
+      "rotated": false,
+      "offsetX": 0,
+      "offsetY": 0,
+      "trimX": 1,
+      "trimY": 1,
+      "width": 98,
+      "height": 110,
+      "rawWidth": 100,
+      "rawHeight": 112,
+      "borderTop": 0,
+      "borderBottom": 0,
+      "borderLeft": 0,
+      "borderRight": 0,
+      "subMetas": {}
+    }
+  }
+}
