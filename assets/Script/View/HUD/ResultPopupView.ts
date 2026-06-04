@@ -27,14 +27,6 @@ export class ResultPopupView extends cc.Component {
     private exitCallback: () => void = null;
 
     protected onLoad(): void {
-        if (this.restartButton !== null) {
-            this.restartButton.node.on(cc.Node.EventType.TOUCH_END, this.OnRestartClicked, this);
-        }
-
-        if (this.exitButton !== null) {
-            this.exitButton.node.on(cc.Node.EventType.TOUCH_END, this.OnExitClicked, this);
-        }
-
         cc.view.on("canvas-resize", this.ResizeOverlay, this);
     }
 
