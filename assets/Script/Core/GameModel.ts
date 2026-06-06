@@ -1,12 +1,7 @@
 import { BoardModel } from "./BoardModel";
 import { TileGenerator } from "./TileGenerator";
 import { SpecialTileType } from "./TileModel";
-import {
-    BoardLogic,
-    CreatedTile,
-    MovedTile,
-    TurnResult,
-} from "./BoardLogic";
+import { BoardLogic, CreatedTile, MovedTile, RemovedTile, TurnResult } from "./BoardLogic";
 import { CellPosition } from "./CellPosition";
 
 export interface GameConfig {
@@ -99,16 +94,22 @@ export class GameModel {
         }
 
         const turns: TurnResult[] = [];
-        let initialNormalGroupSize = 0;
-        let scoreAdded = 0;
+        const createdTiles: CreatedTile[] = [];
+        const movedTiles: MovedTile[] = [];
+        const turns: TurnResult[] = [];
 
         if (clickedTile.HasSpecialLogic()) {
             this.ResolveSpecialChain(
-                [{ x: x, y: y, tileId: clickedTile.id, specialType: clickedTile.GetSpecialType() }],
+                [
+                    {
+                        x: x,
+                        y: y,
+                        tileId: clickedTile.id,
+                        specialType: clickedTile.GetSpecialType(),
+                    },
+                ],
                 turns
             );
-
-            scoreAdded = this.CalculateScoreFromTurns(turns);
         } else {
             const group = BoardLogic.FindGroup(this.board, x, y);
 
@@ -116,43 +117,29 @@ export class GameModel {
                 return this.CreateFailedMoveResult(x, y, MoveFailReason.GroupTooSmall);
             }
 
-            initialNormalGroupSize = group.length;
-
-            const turn = this.CreateRemoveTurn(
-                x,
-                y,
-                SpecialTileType.None,
-                group
-            );
+            const turn = this.CreateRemoveTurn(x, y, SpecialTileType.None, group);
 
             turns.push(turn);
-            scoreAdded = group.length;
+
+            const specialTile = this.generator.CreateRandomSpecialTileForGroup(group.length);
+
+            if (specialTile !== null) {
+                this.board.SetTile(x, y, specialTile);
+
+                createdTiles.push({ x: x, y: y, tileId: specialTile.id });
+            }
         }
 
         if (turns.length <= 0) {
             return this.CreateFailedMoveResult(x, y, MoveFailReason.GroupTooSmall);
         }
 
-        const createdTiles: CreatedTile[] = [];
-        const movedTiles: MovedTile[] = [];
-
-        if (initialNormalGroupSize > 0) {
-            const specialTile = this.generator.CreateRandomSpecialTileForGroup(initialNormalGroupSize);
-
-            if (specialTile !== null) {
-                this.board.SetTile(x, y, specialTile);
-
-                createdTiles.push({
-                    x: x,
-                    y: y,
-                    tileId: specialTile.id,
-                });
-            }
-        }
+        const scoreAdded = this.CalculateScoreFromTurns(turns);
 
         this.AppendMovedTiles(movedTiles, BoardLogic.ApplyGravity(this.board));
 
         const fillResult = BoardLogic.FillEmptyCells(this.board, this.generator);
+
         this.AppendCreatedTiles(createdTiles, fillResult.createdTiles);
         this.AppendMovedTiles(movedTiles, fillResult.movedTiles);
 
@@ -376,12 +363,7 @@ export class GameModel {
                 activatedTileIds[activation.tileId] = true;
             }
 
-            const affectedCells = BoardLogic.GetSpecialAffectedCellsByType(
-                this.board,
-                activation.x,
-                activation.y,
-                activation.specialType
-            );
+            const affectedCells = BoardLogic.GetSpecialAffectedCellsByType(this.board, activation.x, activation.y, activation.specialType);
 
             const cellsToRemove: CellPosition[] = [];
 
@@ -413,39 +395,48 @@ export class GameModel {
                 continue;
             }
 
-            const turn = this.CreateRemoveTurn(
-                activation.x,
-                activation.y,
-                activation.specialType,
-                cellsToRemove
-            );
+            const turn = this.CreateRemoveTurn(activation.x, activation.y, activation.specialType, cellsToRemove);
 
             turns.push(turn);
         }
     }
 
-    private CreateRemoveTurn(
-        sourceX: number,
-        sourceY: number,
-        sourceSpecialType: SpecialTileType,
-        cellsToRemove: CellPosition[]
-    ): TurnResult {
-        return {
-            sourceX: sourceX,
-            sourceY: sourceY,
-            sourceSpecialType: sourceSpecialType,
-            removedTiles: BoardLogic.RemoveGroup(this.board, cellsToRemove),
-        };
+    private CreateRemoveTurn(sourceX: number, sourceY: number, sourceSpecialType: SpecialTileType, cellsToRemove: CellPosition[]): TurnResult {
+        const removedTiles = BoardLogic.RemoveGroup(this.board, cellsToRemove);
+        this.ApplyScoreToRemovedTiles(removedTiles);
+
+        return { sourceX: sourceX, sourceY: sourceY, sourceSpecialType: sourceSpecialType, removedTiles: removedTiles};
     }
 
     private CalculateScoreFromTurns(turns: TurnResult[]): number {
         let score = 0;
 
         for (let i = 0; i < turns.length; i++) {
-            score += turns[i].removedTiles.length;
+            const removedTiles = turns[i].removedTiles;
+
+            for (let j = 0; j < removedTiles.length; j++) {
+                score += removedTiles[j].score;
+            }
         }
 
         return score;
+        }
+
+    private ApplyScoreToRemovedTiles(removedTiles: RemovedTile[],): void {
+        for (let i = 0; i < removedTiles.length; i++) {
+            const removed = removedTiles[i];
+
+            removed.score = this.GetRemovedTileScore(removed);
+        }
+    }
+
+    //Заготовка под рассчет очков
+    private GetRemovedTileScore(removed: RemovedTile): number { 
+        if (removed.specialType === SpecialTileType.None) {
+            return 1;
+        }
+
+        return 5;
     }
 
     private CalculateGameState(): GameState {

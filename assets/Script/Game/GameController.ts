@@ -537,7 +537,6 @@ export class GameController extends cc.Component {
         }
 
         this.topHudView.SetMovesLeft(this.game.GetMovesLeft());
-        this.topHudView.SetScore(this.game.GetScore());
         this.topHudView.SetTargetScore(this.currentLevelConfig.targetScore);
     }
 

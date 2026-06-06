@@ -31,6 +31,27 @@ export class TopHudView extends cc.Component {
         this.RefreshScore();
     }
 
+    public AddVisualScore(added: number): void {
+        this.SetScore(this.score + added);
+
+        this.PlayScorePunchAnimation();
+    }
+
+    public GetScoreTarget(): cc.Node {
+        return this.scoreLabel.node;
+    }
+
+    private PlayScorePunchAnimation(): void {
+        cc.Tween.stopAllByTarget(this.scoreLabel.node);
+
+        this.scoreLabel.node.scale = 1;
+
+        cc.tween(this.scoreLabel.node)
+            .to(0.08, { scale: 1.18 }, { easing: "quadOut" })
+            .to(0.12, { scale: 1 }, { easing: "quadIn" })
+            .start();
+    }
+
     private RefreshAll(): void {
         this.RefreshMoves();
         this.RefreshScore();

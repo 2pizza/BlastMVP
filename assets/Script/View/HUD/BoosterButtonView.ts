@@ -11,12 +11,16 @@ export class BoosterButtonView extends cc.Component {
     @property
     private pressedScale: number = 0.96;
 
+    @property
+    private selectedDarkColor: cc.Color = cc.color(140, 140, 140);
+
     @property(cc.Label)
     private countLabel: cc.Label = null;
 
     private isSelected: boolean = false;
     private defaultPosition: cc.Vec3 = null;
     private defaultScale: number = 1;
+    private defaultColor: cc.Color = null;
 
     protected onLoad(): void {
         if (this.visualNode === null) {
@@ -25,10 +29,11 @@ export class BoosterButtonView extends cc.Component {
 
         this.defaultPosition = this.visualNode.position.clone();
         this.defaultScale = this.visualNode.scale;
+        this.defaultColor = this.visualNode.color.clone();
     }
 
     public SetCount(value: number): void {
-         if (this.countLabel !== null) {
+        if (this.countLabel !== null) {
             this.countLabel.string = value.toString();
         }
     }
@@ -51,6 +56,7 @@ export class BoosterButtonView extends cc.Component {
                 .to(0.08, {
                     y: this.defaultPosition.y + this.pressedOffsetY,
                     scale: this.defaultScale * this.pressedScale,
+                    color: this.selectedDarkColor,
                 })
                 .start();
 
@@ -61,6 +67,7 @@ export class BoosterButtonView extends cc.Component {
             .to(0.08, {
                 y: this.defaultPosition.y,
                 scale: this.defaultScale,
+                color: this.defaultColor,
             })
             .start();
     }

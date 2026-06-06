@@ -9,19 +9,19 @@ export class SpecialTileRegistry {
     private static descriptors: SpecialTileDescriptor[] = [
         {
             type: SpecialTileType.Bomb,
-            minCreatedFromGroupSize: 5,
+            minCreatedFromGroupSize: 7,
             createWeight: 100,
             logic: new BombSpecialTileLogic(1),
         },
         {
             type: SpecialTileType.HorizontalRocket,
-            minCreatedFromGroupSize: 7,
+            minCreatedFromGroupSize: 5,
             createWeight: 50,
             logic: new HorizontalRocketSpecialTileLogic(),
         },
         {
             type: SpecialTileType.VerticalRocket,
-            minCreatedFromGroupSize: 7,
+            minCreatedFromGroupSize: 5,
             createWeight: 50,
             logic: new VerticalRocketSpecialTileLogic(),
         },

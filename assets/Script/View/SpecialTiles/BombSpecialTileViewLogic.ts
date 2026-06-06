@@ -1,163 +1,91 @@
 import { RemovedTile, TurnResult } from "../../Core/BoardLogic";
 import { SpecialTileType } from "../../Core/TileModel";
+import { ScoreFlyPrefixTweenBuilder } from "../Animators/ScoreController";
 import { SpecialTileAnimationHost, SpecialTileViewLogic } from "./SpecialTileViewLogic";
 
 export class BombSpecialTileViewLogic implements SpecialTileViewLogic {
-
     private explosionKickDuration: number = 0.14;
-    
-    private explosionFlyToScoreDuration: number = 0.28;
-    
-    private explosionCollapseDuration: number = 0.1;
-   
-    private explosionKickDistanceMultiplier: number = 0.35;
+    private explosionKickDistance: number = 120;
+
+    public constructor(explosionKickDuration:number, explosionKickDistance:number) {
+        this.explosionKickDistance = explosionKickDistance;
+        this.explosionKickDuration = explosionKickDuration;
+    }
 
     public PlayRemoveAnimation(host: SpecialTileAnimationHost, turn: TurnResult, onComplete: () => void): void {
+        const scoreController = host.GetScoreController();
         const explosionTiles: RemovedTile[] = [];
-        const defaultTiles: RemovedTile[] = [];
 
         for (let i = 0; i < turn.removedTiles.length; i++) {
             const removed = turn.removedTiles[i];
 
-            if (removed.specialType === SpecialTileType.None) {
-                explosionTiles.push(removed);
-            } else {
-                defaultTiles.push(removed);
+            if (removed.specialType !== SpecialTileType.None) {
+                scoreController.AddInstant(removed.score);
+                host.RemoveTileViewById(removed.tileId);
+                continue;
             }
+
+            explosionTiles.push(removed);
         }
 
-        let completedParts = 0;
-        const totalParts = 2;
-
-        const completePart = () => {
-            completedParts++;
-
-            if (completedParts >= totalParts) {
-                onComplete();
-            }
-        };
-
-        this.PlayExplosionRemoveAnimation(host, turn, explosionTiles, completePart);
-        host.PlayDefaultRemoveAnimation(defaultTiles, completePart);
-    }
-
-    private PlayExplosionRemoveAnimation(
-        host: SpecialTileAnimationHost,
-        turn: TurnResult,
-        removedTiles: RemovedTile[],
-        onComplete: () => void
-    ): void {
-        if (removedTiles.length <= 0) {
+        if (explosionTiles.length <= 0) {
             onComplete();
             return;
         }
 
-        const layer = host.GetTileAnimationLayer();
+        let completedExplosionCount = 0;
+        let hasCompleted = false;
 
-        if (layer === null) {
-            host.PlayDefaultRemoveAnimation(removedTiles, onComplete);
-            return;
-        }
+        const completeExplosionTile = () => {
+            completedExplosionCount++;
 
-        if (layer.parent !== null) {
-            layer.setSiblingIndex(layer.parent.childrenCount - 1);
-        }
-
-        const explosionCenter = host.GetCellPositionForAnimation(turn.sourceX, turn.sourceY);
-        const scoreTargetPosition = host.GetScoreFlyTargetPositionForAnimation(layer);
-
-        let completedCount = 0;
-
-        for (let i = 0; i < removedTiles.length; i++) {
-            const removed = removedTiles[i];
-            const tileView = host.GetTileViewById(removed.tileId);
-
-            if (tileView === null) {
-                completedCount++;
-
-                if (completedCount >= removedTiles.length) {
-                    onComplete();
-                }
-
-                continue;
+            if (!hasCompleted && completedExplosionCount >= explosionTiles.length) {
+                hasCompleted = true;
+                onComplete();
             }
+        };
 
-            const node = tileView.node;
+        for (let i = 0; i < explosionTiles.length; i++) {
+            const removed = explosionTiles[i];
+            const prefixTween = this.CreateExplosionPrefixTween(host, turn, removed, completeExplosionTile);
 
-            host.MoveNodeToLayerKeepingWorldPosition(node, layer);
+            scoreController.PlayCustomStartScoreFlyAnimation(removed, prefixTween);
+        }
+    }
 
+   private CreateExplosionPrefixTween(host: SpecialTileAnimationHost, turn: TurnResult, removed: RemovedTile, onExplosionComplete: () => void): ScoreFlyPrefixTweenBuilder {
+        return (tween: cc.Tween, tile: cc.Node): void => {
+            const explosionCenter = host.GetCellPositionForAnimation(turn.sourceX, turn.sourceY);
             const tilePosition = host.GetCellPositionForAnimation(removed.x, removed.y);
             const direction = this.GetExplosionDirection(tilePosition, explosionCenter);
-            const kickTargetPosition = this.GetExplosionKickPosition(node, direction.x, direction.y);
+            const kickTargetPosition = this.GetExplosionKickPosition(tile, direction.x, direction.y);
 
-            cc.tween(node)
+            tween
                 .to(this.explosionKickDuration, {
                     x: kickTargetPosition.x,
                     y: kickTargetPosition.y,
-                    angle: node.angle + 180,
+                    angle: tile.angle + 180,
                 }, {
                     easing: "quadOut",
                 })
-                .to(this.explosionFlyToScoreDuration, {
-                    x: scoreTargetPosition.x,
-                    y: scoreTargetPosition.y,
-                    angle: node.angle + 360,
-                }, {
-                    easing: "quadInOut",
-                })
-                .to(this.explosionCollapseDuration, {
-                    scale: 0,
-                    opacity: 0,
-                }, {
-                    easing: "quadIn",
-                })
-                .call(() => {
-                    host.RemoveTileViewById(removed.tileId);
-                    node.destroy();
-
-                    completedCount++;
-
-                    if (completedCount >= removedTiles.length) {
-                        onComplete();
-                    }
-                })
-                .start();
-        }
+                .call(onExplosionComplete);
+        };
     }
 
-    private GetExplosionDirection(tilePosition: cc.Vec3, explosionCenter: cc.Vec3): cc.Vec2 {
-        let directionX = tilePosition.x - explosionCenter.x;
-        let directionY = tilePosition.y - explosionCenter.y;
+   private GetExplosionDirection(tilePosition: cc.Vec2, explosionCenter: cc.Vec2): cc.Vec2 {
+        const direction = tilePosition.sub(explosionCenter);
 
-        const length = Math.sqrt(directionX * directionX + directionY * directionY);
-
-        if (length > 0.001) {
-            directionX /= length;
-            directionY /= length;
-        } else {
-            const angle = Math.random() * Math.PI * 2;
-
-            directionX = Math.cos(angle);
-            directionY = Math.sin(angle);
+        if (direction.magSqr() > 0.001 * 0.001) {
+            return direction.normalize();
         }
 
-        return cc.v2(directionX, directionY);
+        const angle = Math.random() * Math.PI * 2;
+
+        return cc.v2(Math.cos(angle), Math.sin(angle));
     }
 
-    private GetExplosionKickPosition(node: cc.Node, directionX: number, directionY: number): cc.Vec3 {
-        const distance = this.GetExplosionKickDistance();
-
-        return cc.v3(
-            node.x + directionX * distance,
-            node.y + directionY * distance,
-            node.z
-        );
-    }
-
-    private GetExplosionKickDistance(): number {
-        const visibleSize = cc.view.getVisibleSize();
-        const baseDistance = Math.min(visibleSize.width, visibleSize.height);
-
-        return baseDistance * this.explosionKickDistanceMultiplier;
+    private GetExplosionKickPosition(node: cc.Node, directionX: number, directionY: number): cc.Vec2 {
+        const distance = this.explosionKickDistance;
+        return cc.v2(node.x + directionX * distance, node.y + directionY * distance);
     }
 }

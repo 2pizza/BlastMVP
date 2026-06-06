@@ -9,6 +9,7 @@ export interface RemovedTile {
     y: number;
     tileId: number;
     specialType: SpecialTileType;
+    score: number;
 }
 
 export interface CreatedTile {
@@ -95,12 +96,7 @@ export class BoardLogic {
                 continue;
             }
 
-            removedTiles.push({
-                x: cell.x,
-                y: cell.y,
-                tileId: tile.id,
-                specialType: tile.GetSpecialType(),
-            });
+            removedTiles.push({ x: cell.x, y: cell.y, tileId: tile.id, specialType: tile.GetSpecialType(), score: 0 });
 
             board.SetTile(cell.x, cell.y, null);
         }
@@ -282,14 +278,7 @@ export class BoardLogic {
         }
     }
 
-    private static TryAddNeighbor(
-        board: BoardModel,
-        x: number,
-        y: number,
-        targetColorId: number,
-        visited: boolean[],
-        queue: CellPosition[]
-    ): void {
+    private static TryAddNeighbor(board: BoardModel, x: number, y: number, targetColorId: number, visited: boolean[], queue: CellPosition[]): void {
         if (!board.IsInside(x, y)) {
             return;
         }
@@ -314,12 +303,7 @@ export class BoardLogic {
         queue.push({ x: x, y: y });
     }
 
-    private static FindGroupWithVisited(
-        board: BoardModel,
-        startX: number,
-        startY: number,
-        visited: boolean[]
-    ): CellPosition[] {
+    private static FindGroupWithVisited(board: BoardModel, startX: number, startY: number, visited: boolean[]): CellPosition[] {
         const startTile = board.GetTile(startX, startY);
 
         if (startTile === null) {

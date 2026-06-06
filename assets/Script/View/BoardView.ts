@@ -1,28 +1,28 @@
 import { BoardModel } from "../Core/BoardModel";
 import { CreatedTile, MovedTile, RemovedTile, TurnResult } from "../Core/BoardLogic";
 import { MoveResult } from "../Core/GameModel";
-import { SpecialTileRegistry } from "../Core/SpecialTiles/SpecialTileRegistry";
 import { SpecialTileType, TileModel } from "../Core/TileModel";
 import { SpecialTileSpriteBinding } from "./SpecialTiles/SpecialTileSpriteBinding";
 import { SpecialTileViewRegistry } from "./SpecialTiles/SpecialTileViewRegistry";
 import { TileView } from "./TileView";
 import { SpecialTileAnimationHost } from "./SpecialTiles/SpecialTileViewLogic";
+import { ScoreController } from "./Animators/ScoreController";
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
 export class BoardView extends cc.Component implements SpecialTileAnimationHost {
     @property(cc.Node)
-    private boardRoot: cc.Node = null;
+    private boardRoot: cc.Node | null = null;
+
+    @property(ScoreController)
+    private scoreController: ScoreController | null = null;
 
     @property(cc.Node)
-    private tileAnimationLayer: cc.Node = null;
+    private boardBackground: cc.Node | null = null;
 
     @property(cc.Node)
-    private boardBackground: cc.Node = null;
-
-    @property(cc.Node)
-    private boardMask: cc.Node = null;
+    private boardMask: cc.Node | null = null;
     
 
     @property
@@ -31,11 +31,10 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
     @property
     private referenceRows: number = 9;
 
-    private referenceBackgroundSize: cc.Size = null;
-    private referenceMaskSize: cc.Size = null;
+    
 
     @property(cc.Prefab)
-    private tilePrefab: cc.Prefab = null;
+    private tilePrefab: cc.Prefab | null = null;
 
     @property([cc.SpriteFrame])
     private tileSprites: cc.SpriteFrame[] = [];
@@ -47,35 +46,44 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
     private cellSize: number = 100;
 
     @property
-    private removeDuration: number = 0.12;
-
-    @property
     private moveDuration: number = 0.18;
-
-    @property(cc.Node)
-    private scoreFlyTarget: cc.Node = null;
-
-    @property
-    private scoreFlyDuration: number = 0.35;
-    @property
-    private scoreFlyCollapseDuration: number = 0.12;
     
+    private referenceBackgroundSize!: cc.Size;
+    private referenceMaskSize!: cc.Size;
 
-    private board: BoardModel = null;
+    private board!: BoardModel;
     private tileViewsById: { [tileId: number]: TileView } = {};
-    private tapCallback: (x: number, y: number) => void = null;
+    private tapCallback!: (x: number, y: number) => void;
+    
+    private selectedTileView: TileView | null = null;
 
-    private selectedTileView: TileView = null;
+    protected override onLoad(): void {
+        if (this.boardRoot === null)
+            cc.error("BoardView: boardRoot in not assigned");
 
-    protected onLoad(): void {
-        if (this.boardBackground !== null) {
-            this.referenceBackgroundSize = this.boardBackground.getContentSize();
-        }
+        if (this.scoreController === null)
+            cc.error("BoardView: scoreController in not assigned");
 
-        if (this.boardMask !== null) {
-            this.referenceMaskSize = this.boardMask.getContentSize();
+        if (this.boardBackground === null)
+            cc.error("BoardView: boardBackground in not assigned");
+
+        if (this.boardMask === null)
+            cc.error("BoardView: boardMask in not assigned");
+
+        if (this.tilePrefab === null)
+            cc.error("BoardView: tilePrefab in not assigned");
+
+        if (this.tileSprites.length === 0)
+            cc.error("BoardView: tileSprites in empty");
+
+
+        this.referenceBackgroundSize = this.boardBackground.getContentSize();
+        this.referenceMaskSize = this.boardMask.getContentSize();
     }
-}
+
+    public GetScoreController(): ScoreController {
+        return this.scoreController;
+    }
 
     public Init(board: BoardModel, onTileTap: (x: number, y: number) => void): void {
         this.board = board;
@@ -83,6 +91,8 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
 
         this.ClearAllTiles();
         this.CreateAllTilesFromBoard();
+        this.scoreController.Init(this);
+        this.scoreController.Reset();
 
         this.ResizeBoardArea(board.width, board.height);
     }
@@ -92,6 +102,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
 
         this.ClearAllTiles();
         this.CreateAllTilesFromBoard();
+        this.scoreController.Reset();
         this.ResizeBoardArea(board.width, board.height);
     }
 
@@ -101,6 +112,10 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         if (!result.success) {
             onComplete();
             return;
+        }
+
+        if (this.scoreController !== null) {
+            this.scoreController.BeginMove(result);
         }
 
         this.PlayTurns(result.turns, 0, () => {
@@ -156,22 +171,6 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
             x: x,
             y: y,
         };
-    }
-
-    public GetScoreFlyTargetPositionForAnimation(layer: cc.Node): cc.Vec3 {
-        if (layer === null) {
-            return cc.v3(0, 0, 0);
-        }
-
-        if (this.scoreFlyTarget === null || this.scoreFlyTarget.parent === null) {
-            return cc.v3(0, 0, 0);
-        }
-
-        const worldTargetPosition = this.scoreFlyTarget.parent.convertToWorldSpaceAR(this.scoreFlyTarget.position);
-
-        const localTargetPosition = layer.convertToNodeSpaceAR(worldTargetPosition);
-
-        return cc.v3(localTargetPosition.x, localTargetPosition.y, 0);
     }
 
     public SetTileSelected(x: number, y: number, selected: boolean): void {
@@ -263,28 +262,12 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
                 continue;
             }
 
-            this.CreateTileViewFromModel(
-                found.tile,
-                created.x,
-                created.y,
-                created.y
-            );
+            this.CreateTileViewFromModel(found.tile, created.x, created.y, created.y);
         }
     }
 
-    private CreateTileViewFromModel(tile: TileModel, boardX: number, boardY: number, visualY: number): TileView {
-        if (this.boardRoot === null) {
-            cc.error("BoardView: boardRoot is not assigned");
-            return null;
-        }
-
-        if (this.tilePrefab === null) {
-            cc.error("BoardView: tilePrefab is not assigned");
-            return null;
-        }
-
+    private CreateTileViewFromModel(tile: TileModel, boardX: number, boardY: number, visualY: number): TileView | null {
         const spriteFrame = this.GetTileSpriteFrame(tile);
-
         if (spriteFrame === null) {
             cc.error("BoardView: spriteFrame is null for tileId:", tile.id);
             return null;
@@ -293,7 +276,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         const node = cc.instantiate(this.tilePrefab);
         node.parent = this.boardRoot;
 
-        node.position = this.GetCellPosition(boardX, visualY);
+        node.position = this.GetCellPosition(boardX, visualY)
         node.scale = 1;
         node.opacity = 255;
         node.active = true;
@@ -306,14 +289,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
             return null;
         }
 
-        tileView.Init(
-            tile.id,
-            tile.GetColorId(),
-            boardX,
-            boardY,
-            spriteFrame,
-            this.tapCallback
-        );
+        tileView.Init(tile.id, tile.GetColorId(), boardX, boardY, spriteFrame, this.tapCallback);
 
         tileView.SetLogicalSize(this.cellSize, this.cellSize);
 
@@ -330,83 +306,14 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
             return;
         }
 
-        cc.log("PlayTurnRemoveAnimation1");
         this.PlayDefaultRemoveAnimation(turn.removedTiles, onComplete);
     }
 
     public PlayDefaultRemoveAnimation(removedTiles: RemovedTile[], onComplete: () => void): void {
-        if (removedTiles.length <= 0) {
-            onComplete();
-            return;
-        }
-
-        for (let i = 0; i < removedTiles.length; i++) {
-            const removed = removedTiles[i];
-            const tileView = this.tileViewsById[removed.tileId];
-
-            if (tileView === undefined || tileView === null) {
-                continue;
-            }
-
-            if (removed.specialType === SpecialTileType.None) {
-                this.PlayScoreFlyClone(tileView.node, i * 0.02);
-            }
-
-            delete this.tileViewsById[removed.tileId];
-            tileView.node.destroy();
-        }
-
+        
+        this.scoreController.PlayScoreFlyAnimations(removedTiles);
         onComplete();
     }
-
-    private PlayScoreFlyClone(sourceNode: cc.Node, delay: number): void {
-        if (this.scoreFlyTarget === null || this.scoreFlyTarget.parent === null) {
-            return;
-        }
-
-        const layer = this.GetTileAnimationLayer();
-
-        if (layer === null) {
-            return;
-        }
-
-        const clone = cc.instantiate(sourceNode);
-
-        clone.parent = layer;
-        clone.active = true;
-        clone.opacity = sourceNode.opacity;
-        clone.scale = sourceNode.scale;
-
-        const worldStartPosition = sourceNode.parent.convertToWorldSpaceAR(sourceNode.position);
-        const localStartPosition = layer.convertToNodeSpaceAR(worldStartPosition);
-
-        clone.setPosition(localStartPosition);
-
-        const worldTargetPosition = this.scoreFlyTarget.parent.convertToWorldSpaceAR(
-            this.scoreFlyTarget.position
-        );
-
-        const localTargetPosition = layer.convertToNodeSpaceAR(worldTargetPosition);
-
-        cc.tween(clone)
-            .delay(delay)
-            .to(this.scoreFlyDuration, {
-                x: localTargetPosition.x,
-                y: localTargetPosition.y,
-            }, {
-                easing: "quadOut",
-            })
-            .to(this.scoreFlyCollapseDuration, {
-                scale: 0,
-                opacity: 0,
-            }, {
-                easing: "quadIn",
-            })
-            .call(() => {
-                clone.destroy();
-            })
-            .start();
-            }
 
     private PlayMoveAnimation(movedTiles: MovedTile[], onComplete: () => void): void {
         if (movedTiles.length <= 0) {
@@ -482,7 +389,6 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         this.tileViewsById = {};
 
         this.boardRoot.destroyAllChildren();
-        this.tileAnimationLayer.destroyAllChildren();
     }
 
     public GetTileViewById(tileId: number): TileView | null {
@@ -496,19 +402,40 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
     }
 
     public RemoveTileViewById(tileId: number): void {
-        delete this.tileViewsById[tileId];
-    }
+        const tileView = this.tileViewsById[tileId];
 
-    public GetCellPositionForAnimation(x: number, y: number): cc.Vec3 {
-        return this.GetCellPosition(x, y);
-    }
-
-    public GetTileAnimationLayer(): cc.Node | null {
-        if (this.tileAnimationLayer !== null) {
-            return this.tileAnimationLayer;
+        if (tileView === undefined || tileView === null) {
+            return;
         }
 
-        return this.boardRoot;
+        delete this.tileViewsById[tileId];
+
+        if (tileView.node !== null && cc.isValid(tileView.node)) {
+            tileView.node.destroy();
+        }
+    }
+
+    public GetAnimationLayer(): cc.Node {
+        return this.scoreController.GetAnimationLayer();
+    }
+
+   public GetCellPositionForAnimation(x: number, y: number): cc.Vec3 {
+        const boardPosition = this.GetCellPosition(x, y);
+
+        if (this.boardRoot === null) {
+            return boardPosition;
+        }
+
+        const animationLayer =  this.GetAnimationLayer();
+
+        if (animationLayer === null) {
+            return boardPosition;
+        }
+
+        const worldPosition = this.boardRoot.convertToWorldSpaceAR(boardPosition);
+        const animationLayerPosition = animationLayer.convertToNodeSpaceAR(worldPosition);
+
+        return animationLayerPosition;
     }
 
     public MoveNodeToLayerKeepingWorldPosition(node: cc.Node, layer: cc.Node): void {
@@ -531,14 +458,10 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         const offsetX = -((this.board.width - 1) * this.cellSize) * 0.5;
         const offsetY = -((this.board.height - 1) * this.cellSize) * 0.5;
 
-        return cc.v3(
-            offsetX + x * this.cellSize,
-            offsetY + y * this.cellSize,
-            0
-        );
+        return cc.v3(offsetX + x * this.cellSize, offsetY + y * this.cellSize, 0);
     }
 
-    private GetTileSpriteFrame(tile: TileModel): cc.SpriteFrame {
+    private GetTileSpriteFrame(tile: TileModel): cc.SpriteFrame | null {
         if (tile.HasSpecialLogic()) {
             return this.GetSpecialTileSpriteFrame(tile.GetSpecialType());
         }
@@ -568,8 +491,8 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         return null;
     }
 
-    private GetSpriteFrame(colorId: number): cc.SpriteFrame {
-        if (this.tileSprites === null || this.tileSprites.length <= 0) {
+    private GetSpriteFrame(colorId: number): cc.SpriteFrame | null {
+        if (this.tileSprites.length <= 0) {
             cc.error("BoardView: tileSprites is empty");
             return null;
         }
@@ -631,43 +554,16 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         const referenceTilesWidth = this.referenceColumns * this.cellSize;
         const referenceTilesHeight = this.referenceRows * this.cellSize;
 
-        if (this.boardBackground !== null && this.referenceBackgroundSize !== null) {
-            const backgroundPaddingX = Math.max(
-                0,
-                (this.referenceBackgroundSize.width - referenceTilesWidth) * 0.5
-            );
+        const backgroundPaddingX = Math.max(0, (this.referenceBackgroundSize.width - referenceTilesWidth) * 0.5);
+        const backgroundPaddingY = Math.max(0, (this.referenceBackgroundSize.height - referenceTilesHeight) * 0.5);
+        this.boardBackground.setContentSize(tilesWidth + backgroundPaddingX * 2, tilesHeight + backgroundPaddingY * 2);
+        
 
-            const backgroundPaddingY = Math.max(
-                0,
-                (this.referenceBackgroundSize.height - referenceTilesHeight) * 0.5
-            );
-
-            this.boardBackground.setContentSize(
-                tilesWidth + backgroundPaddingX * 2,
-                tilesHeight + backgroundPaddingY * 2
-            );
-        }
-
-        if (this.boardMask !== null && this.referenceMaskSize !== null) {
-            const maskPaddingX = Math.max(
-                0,
-                (this.referenceMaskSize.width - referenceTilesWidth) * 0.5
-            );
-
-            const maskPaddingY = Math.max(
-                0,
-                (this.referenceMaskSize.height - referenceTilesHeight) * 0.5
-            );
-
-            this.boardMask.setContentSize(
-                tilesWidth + maskPaddingX * 2,
-                tilesHeight + maskPaddingY * 2
-            );
-        }
-
-        if (this.boardRoot !== null) {
-            this.boardRoot.setContentSize(tilesWidth, tilesHeight);
-            this.boardRoot.setPosition(0, 0);
-        }
+        const maskPaddingX = Math.max(0, (this.referenceMaskSize.width - referenceTilesWidth) * 0.5);
+        const maskPaddingY = Math.max(0, (this.referenceMaskSize.height - referenceTilesHeight) * 0.5);
+        this.boardMask.setContentSize(tilesWidth + maskPaddingX * 2, tilesHeight + maskPaddingY * 2);
+        
+        this.boardRoot.setContentSize(tilesWidth, tilesHeight);
+        this.boardRoot.setPosition(0, 0);
     }
 }

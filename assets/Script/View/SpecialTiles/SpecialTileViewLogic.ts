@@ -1,14 +1,11 @@
 import { RemovedTile, TurnResult } from "../../Core/BoardLogic";
-import { TileView } from "../TileView";
+import { ScoreController } from "../Animators/ScoreController";
 
 export interface SpecialTileAnimationHost {
-    GetTileViewById(tileId: number): TileView | null;
-    RemoveTileViewById(tileId: number): void;
-    GetCellPositionForAnimation(x: number, y: number): cc.Vec3;
-    GetTileAnimationLayer(): cc.Node | null;
-    MoveNodeToLayerKeepingWorldPosition(node: cc.Node, layer: cc.Node): void;
-    PlayDefaultRemoveAnimation(removedTiles: RemovedTile[], onComplete: () => void): void;
-    GetScoreFlyTargetPositionForAnimation(layer: cc.Node): cc.Vec3
+    GetScoreController(): ScoreController;
+    RemoveTileViewById(tileId: number): void
+    GetCellPositionForAnimation(x: number, y: number): cc.Vec3
+    GetAnimationLayer(): cc.Node
 }
 
 export interface SpecialTileViewLogic {

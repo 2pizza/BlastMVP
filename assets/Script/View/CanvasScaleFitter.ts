@@ -3,13 +3,13 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export class CanvasScaleFitter extends cc.Component {
     @property(cc.Node)
-    private targetRoot: cc.Node = null;
+    private targetRoot: cc.Node | null = null;
 
     @property
-    private designWidth: number = 720;
+    private designWidth: number = 1080;
 
     @property
-    private designHeight: number = 1280;
+    private designHeight: number = 1920;
 
     @property
     private fitOnLoad: boolean = true;

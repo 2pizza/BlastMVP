@@ -52,11 +52,7 @@ export class BoardModel {
                 }
 
                 if (tile.id === tileId) {
-                    return {
-                        tile: tile,
-                        x: x,
-                        y: y,
-                    };
+                    return { tile: tile, x: x, y: y };
                 }
             }
         }
