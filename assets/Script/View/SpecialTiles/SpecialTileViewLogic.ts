@@ -1,4 +1,4 @@
-import { RemovedTile, TurnResult } from "../../Core/BoardLogic";
+import { TurnResult } from "../../Core/BoardLogic";
 import { ScoreController } from "../Animators/ScoreController";
 
 export interface SpecialTileAnimationHost {

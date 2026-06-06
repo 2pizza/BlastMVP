@@ -2,8 +2,6 @@ import { TurnResult } from "../../Core/BoardLogic";
 import { SpecialTileType } from "../../Core/TileModel";
 import { SpecialTileAnimationHost, SpecialTileViewLogic } from "./SpecialTileViewLogic";
 
-import { ScoreFlyAnimationController } from "../Animators/ScoreFlyAnimationController";
-
 export class DefaultSpecialTileViewLogic implements SpecialTileViewLogic {
     public PlayRemoveAnimation(host: SpecialTileAnimationHost, turn: TurnResult, onComplete: () => void): void {
         const scoreController = host.GetScoreController();

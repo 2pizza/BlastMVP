@@ -2324,12 +2324,6 @@
     "messageLabel": {
       "__id__": 28
     },
-    "restartButton": {
-      "__id__": 35
-    },
-    "exitButton": {
-      "__id__": 43
-    },
     "overlayOpacity": 150,
     "_id": "7f+UvXAH9MObkC0zxaKEOD"
   },

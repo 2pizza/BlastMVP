@@ -14,12 +14,6 @@ export class ResultPopupView extends cc.Component {
     @property(cc.Label)
     private messageLabel: cc.Label = null;
 
-    @property(cc.Button)
-    private restartButton: cc.Button = null;
-
-    @property(cc.Button)
-    private exitButton: cc.Button = null;
-
     @property
     private overlayOpacity: number = 150;
 
@@ -27,6 +21,18 @@ export class ResultPopupView extends cc.Component {
     private exitCallback: () => void = null;
 
     protected onLoad(): void {
+        if (this.overlayNode === null)
+            cc.error("ResultPopupView: overlayNode is not assigned");
+
+        if (this.windowNode === null)
+            cc.error("ResultPopupView: windowNode is not assigned");
+
+        if (this.titleLabel === null)
+            cc.error("ResultPopupView: titleLabel is not assigned");
+
+        if (this.messageLabel === null)
+            cc.error("ResultPopupView: messageLabel is not assigned");
+
         cc.view.on("canvas-resize", this.ResizeOverlay, this);
     }
 

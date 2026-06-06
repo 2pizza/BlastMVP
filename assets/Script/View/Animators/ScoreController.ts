@@ -12,10 +12,10 @@ export type ScoreFlyPrefixTweenBuilder = (tween: cc.Tween, tile: cc.Node) => voi
 export class ScoreController extends cc.Component {
 
     @property(TopHudView)
-    private topHudView: TopHudView | null = null;
+    private topHudView: TopHudView = null;
 
     @property(cc.Node)
-    private animationLayer: cc.Node | null = null;
+    private animationLayer: cc.Node = null;
 
     @property
     private flyDuration: number = 0.28;
@@ -35,10 +35,10 @@ export class ScoreController extends cc.Component {
 
     protected onLoad(): void {
           if (this.topHudView === null)
-            cc.error("ScoreController: topHudView in not assigned");
+            cc.error("ScoreController: topHudView is not assigned");
 
         if (this.animationLayer === null)
-            cc.error("ScoreController: animationLayer in not assigned");
+            cc.error("ScoreController: animationLayer is not assigned");
     }
 
     public Init(boardView:BoardView):void {
@@ -82,7 +82,6 @@ export class ScoreController extends cc.Component {
     public AddInstant(value:number):void {
         this.visualScore += value;
         this.SetHudScore(this.visualScore);
-        this.PlayHudPunchAnimation();
     }
 
     public PlayScoreFlyAnimation(removed: RemovedTile, onComplete?: () => void): void {
@@ -192,12 +191,11 @@ export class ScoreController extends cc.Component {
     private CompleteScoreFlight(removed: RemovedTile): void {
         this.visualScore += removed.score;
         this.SetHudScore(this.visualScore);
-        this.PlayHudPunchAnimation();
 
         this.expectedFlightCount--;
 
         if (this.expectedFlightCount < 0) {
-            cc.warn("ScoreFlyAnimationController: expected flight count became negative.");
+            cc.error("ScoreController: expected flight count became negative.");
             this.expectedFlightCount = 0;
         }
 
@@ -219,19 +217,6 @@ export class ScoreController extends cc.Component {
         }
 
         cc.error("ScoreController: invalid score state. " + "Visual score: " + this.visualScore + ", expected flight count: " + this.expectedFlightCount + ", target score: " + this.score);
-    }
-
-    private CountMoveScore(moveResult: MoveResult): number {
-        let count = 0;
-
-        for (let i = 0; i < moveResult.turns.length; i++) {
-            const turn = moveResult.turns[i];
-            for (let j = 0; j < turn.removedTiles.length; j++) {
-                count += turn.removedTiles[j].score;
-            }
-        }
-
-        return count; 
     }
 
     private CountMoveScoreFlights(moveResult: MoveResult): number {
@@ -286,33 +271,7 @@ export class ScoreController extends cc.Component {
     }
 
     private SetHudScore(score: number): void {
-        const hudAsAny = this.topHudView as any;
-
-          if (typeof hudAsAny.SetVisualScore === "function") {
-            hudAsAny.SetVisualScore(score);
-            return;
-        }
-
-        this.topHudView.SetScore(score);
-    }
-
-    private PlayHudPunchAnimation(): void {
-        const hudAsAny = this.topHudView as any;
-
-        if (typeof hudAsAny.PlayScorePunchAnimation === "function") {
-            hudAsAny.PlayScorePunchAnimation();
-            return;
-        }
-
-        const scoreTarget = this.topHudView.GetScoreTarget();
-
-        cc.Tween.stopAllByTarget(scoreTarget);
-        scoreTarget.scale = 1;
-
-        cc.tween(scoreTarget)
-            .to(0.08, { scale: 1.18 }, { easing: "quadOut" })
-            .to(0.12, { scale: 1 }, { easing: "quadIn" })
-            .start();
+        this.topHudView.SetVisualScore(score);
     }
 
     private CallComplete(onComplete?: () => void): void {

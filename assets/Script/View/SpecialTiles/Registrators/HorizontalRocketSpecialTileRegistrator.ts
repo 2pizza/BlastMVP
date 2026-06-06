@@ -3,7 +3,7 @@ import { HorizontalRocketSpecialTileViewLogic } from "../Rocket/HorizontalRocket
 import { SpecialTileType } from "../../../Core/TileModel";
 import { RocketSpecialTileRegistratorBase } from "./RocketSpecialTileRegistratorBase";
 
-const { ccclass, property } = cc._decorator;
+const { ccclass } = cc._decorator;
 
 @ccclass
 export class HorizontalRocketSpecialTileRegistrator extends RocketSpecialTileRegistratorBase {

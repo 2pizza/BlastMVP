@@ -96,7 +96,6 @@ export class GameModel {
         const turns: TurnResult[] = [];
         const createdTiles: CreatedTile[] = [];
         const movedTiles: MovedTile[] = [];
-        const turns: TurnResult[] = [];
 
         if (clickedTile.HasSpecialLogic()) {
             this.ResolveSpecialChain(
@@ -430,7 +429,7 @@ export class GameModel {
         }
     }
 
-    //Заготовка под рассчет очков
+    //Заготовка под расчет очков
     private GetRemovedTileScore(removed: RemovedTile): number { 
         if (removed.specialType === SpecialTileType.None) {
             return 1;

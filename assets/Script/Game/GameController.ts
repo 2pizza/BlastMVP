@@ -136,7 +136,7 @@ export class GameController extends cc.Component {
             return;
         }
 
-        //При активном бустере input вне поля воспринимается как сброс состояния - отменяем дальнеуюшую обработку и сбрасываем выбранный бустер
+        //При активном бустере input вне поля воспринимается как сброс состояния - отменяем дальнейшую обработку и сбрасываем выбранный бустер
         event.stopPropagation();
         this.ResetBoosterSelection();
     }
@@ -293,8 +293,6 @@ export class GameController extends cc.Component {
             this.swapFirstY = y;
             this.boosterInputMode = BoosterInputMode.SwapSelectSecondCell;
             this.boardView.SetTileSelected(x, y, true);
-
-            cc.log("Swap first cell:", x, y);
             return;
         }
 

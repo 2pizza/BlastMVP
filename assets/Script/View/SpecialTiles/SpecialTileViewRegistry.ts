@@ -1,5 +1,4 @@
 import { SpecialTileType } from "../../Core/TileModel";
-import { BombSpecialTileViewLogic } from "./BombSpecialTileViewLogic";
 import { DefaultSpecialTileViewLogic } from "./DefaultSpecialTileViewLogic";
 import { SpecialTileViewLogic } from "./SpecialTileViewLogic";
 
