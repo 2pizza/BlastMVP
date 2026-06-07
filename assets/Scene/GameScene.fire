@@ -4965,8 +4965,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 409.07,
-      "height": 50.4
+      "width": 574.77,
+      "height": 100.8
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -5019,14 +5019,14 @@
     "_dstBlendFactor": 771,
     "_string": "Перемешиваю",
     "_N$string": "Перемешиваю",
-    "_fontSize": 60,
-    "_lineHeight": 40,
+    "_fontSize": 80,
+    "_lineHeight": 80,
     "_enableWrapText": true,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_batchAsBitmap": false,
-    "_styleFlags": 0,
+    "_styleFlags": 1,
     "_underlineHeight": 0,
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
