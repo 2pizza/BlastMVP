@@ -81,6 +81,8 @@ export class MainSceneController extends cc.Component {
 
         this.SubscribeEvents();
         this.RefreshBoardSize();
+
+         cc.director.preloadScene(this.gameSceneName);
     }
 
     private InitState(): void {

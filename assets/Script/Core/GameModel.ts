@@ -257,12 +257,7 @@ export class GameModel {
         };
     }
 
-    public TryUseSwapBooster(
-        firstX: number,
-        firstY: number,
-        secondX: number,
-        secondY: number
-    ): MoveResult {
+    public TryUseSwapBooster(firstX: number, firstY: number, secondX: number, secondY: number): MoveResult {
         if (this.IsGameOver()) {
             return this.CreateFailedMoveResult(secondX, secondY, MoveFailReason.GameIsOver);
         }
@@ -450,11 +445,7 @@ export class GameModel {
         return GameState.Playing;
     }
 
-    private CreateFailedMoveResult(
-        x: number,
-        y: number,
-        reason: MoveFailReason
-    ): MoveResult {
+    private CreateFailedMoveResult(x: number, y: number, reason: MoveFailReason): MoveResult {
         return {
             success: false,
 

@@ -86,6 +86,8 @@ export class GameController extends cc.Component {
         if (this.inputRoot !== null) {
             this.inputRoot.on(cc.Node.EventType.TOUCH_END, this.OnGlobalTouchEnd, this, true);
         }
+
+         cc.director.preloadScene(this.mainSceneName);
     }
 
     protected override start(): void {

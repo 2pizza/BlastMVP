@@ -33,7 +33,6 @@ export interface TurnResult {
 export class BoardLogic {
     public static FindGroup(board: BoardModel, startX: number, startY: number): CellPosition[] {
         const startTile = board.GetTile(startX, startY);
-
         if (startTile === null) {
             return [];
         }
@@ -66,23 +65,14 @@ export class BoardLogic {
         return result;
     }
 
-    public static GetSpecialAffectedCellsByType(
-        board: BoardModel,
-        x: number,
-        y: number,
-        specialType: SpecialTileType
-    ): CellPosition[] {
+    public static GetSpecialAffectedCellsByType(board: BoardModel, x: number, y: number, specialType: SpecialTileType): CellPosition[] {
         const descriptor = SpecialTileRegistry.GetDescriptor(specialType);
 
         if (descriptor === null) {
             return [];
         }
 
-        return descriptor.logic.GetAffectedCells({
-            board: board,
-            x: x,
-            y: y,
-        });
+        return descriptor.logic.GetAffectedCells({ board: board, x: x, y: y });
     }
 
     public static RemoveGroup(board: BoardModel, group: CellPosition[]): RemovedTile[] {
@@ -121,13 +111,7 @@ export class BoardLogic {
                     board.SetTile(x, writeY, tile);
                     board.SetTile(x, readY, null);
 
-                    movedTiles.push({
-                        tileId: tile.id,
-                        path: [
-                            { x: x, y: readY },
-                            { x: x, y: writeY },
-                        ],
-                    });
+                    movedTiles.push({ tileId: tile.id, path: [ { x: x, y: readY }, { x: x, y: writeY } ] });
                 }
 
                 writeY++;
@@ -156,30 +140,16 @@ export class BoardLogic {
 
                 board.SetTile(x, y, newTile);
 
-                createdTiles.push({
-                    x: x,
-                    y: spawnY,
-                    tileId: newTile.id,
-                });
+                createdTiles.push({  x: x, y: spawnY, tileId: newTile.id });
 
-                movedTiles.push({
-                    tileId: newTile.id,
-                    path: [
-                        { x: x, y: spawnY },
-                        { x: x, y: y },
-                    ],
-                });
+                movedTiles.push({ tileId: newTile.id,  path: [ { x: x, y: spawnY }, { x: x, y: y }  ] });
 
                 spawnOffset++;
             }
         }
 
-        return {
-            createdTiles: createdTiles,
-            movedTiles: movedTiles,
-        };
+        return { createdTiles: createdTiles, movedTiles: movedTiles };
     }
-
 
     public static ShuffleTiles(board: BoardModel): MovedTile[] {
         const entries: { x: number; y: number; tile: TileModel }[] = [];
@@ -187,16 +157,11 @@ export class BoardLogic {
         for (let y = 0; y < board.height; y++) {
             for (let x = 0; x < board.width; x++) {
                 const tile = board.GetTile(x, y);
-
                 if (tile === null) {
                     continue;
                 }
 
-                entries.push({
-                    x: x,
-                    y: y,
-                    tile: tile,
-                });
+                entries.push({ x: x, y: y, tile: tile });
             }
         }
 
@@ -223,13 +188,7 @@ export class BoardLogic {
 
             board.SetTile(targetEntry.x, targetEntry.y, sourceEntry.tile);
 
-            movedTiles.push({
-                tileId: sourceEntry.tile.id,
-                path: [
-                    { x: sourceEntry.x, y: sourceEntry.y },
-                    { x: targetEntry.x, y: targetEntry.y },
-                ],
-            });
+            movedTiles.push({ tileId: sourceEntry.tile.id, path: [{ x: sourceEntry.x, y: sourceEntry.y }, { x: targetEntry.x, y: targetEntry.y }] });
         }
 
         return movedTiles;
