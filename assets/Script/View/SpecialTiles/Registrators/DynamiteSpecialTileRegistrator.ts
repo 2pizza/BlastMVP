@@ -5,7 +5,7 @@ import { SpecialTileViewRegistry } from "../SpecialTileViewRegistry";
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-export class DynamiteSpecialTileView extends cc.Component {
+export class DynamiteSpecialTileRegistrator extends cc.Component {
     @property(cc.SpriteFrame)
     private bombSpriteFrame: cc.SpriteFrame = null;
 

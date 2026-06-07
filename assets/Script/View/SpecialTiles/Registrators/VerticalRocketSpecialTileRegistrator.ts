@@ -14,7 +14,7 @@ export class VerticalRocketSpecialTileRegistrator extends RocketSpecialTileRegis
         }
 
         SpecialTileViewRegistry.RegisterLogic(SpecialTileType.VerticalRocket, 
-                                                        new VerticalRocketSpecialTileViewLogic(this.rocketSpriteFrame, this.rocketSpeedSecondsPerPixel, this.rocketDistanceMultiplier,
+                                                        new VerticalRocketSpecialTileViewLogic(this.rocketSpriteFrame, this.rocketSpeedPixelsPerSecond, this.rocketDistanceMultiplier,
                                                             this.tileKickDuration, this.tileKickDistance, this.tileForwardKickDistance, this.tileContactAdvanceTime));
     }
 }

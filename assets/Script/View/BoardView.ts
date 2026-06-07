@@ -51,7 +51,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
     private referenceBackgroundSize!: cc.Size;
     private referenceMaskSize!: cc.Size;
 
-    private board!: BoardModel;
+    private board: BoardModel = null;
     private tileViewsById: { [tileId: number]: TileView } = {};
     private tapCallback!: (x: number, y: number) => void;
     

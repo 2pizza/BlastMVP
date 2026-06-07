@@ -10,7 +10,7 @@ export class RocketSpecialTileRegistratorBase extends cc.Component {
     protected rocketSpriteFrame: cc.SpriteFrame = null;
 
     @property
-    protected rocketSpeedSecondsPerPixel: number = 0.32;
+    protected rocketSpeedPixelsPerSecond: number = 2500;
 
     @property
     protected rocketDistanceMultiplier: number = 1.4;

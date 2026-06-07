@@ -49,7 +49,7 @@ export class BoosterButtonView extends cc.Component {
             return;
         }
 
-        this.visualNode.stopAllActions();
+        cc.Tween.stopAllByTarget(this.visualNode);
 
         if (value) {
             cc.tween(this.visualNode)

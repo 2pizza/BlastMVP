@@ -591,7 +591,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "HorizontalRocketSpecialTileView",
+    "_name": "HorizontalRocketSpecialTileRegistrator",
     "_objFlags": 0,
     "_parent": {
       "__id__": 9
@@ -662,7 +662,7 @@
     "rocketSpriteFrame": {
       "__uuid__": "4410657d-d23e-470f-88bb-47916724f170"
     },
-    "rocketSpeedSecondsPerPixel": 2500,
+    "rocketSpeedPixelsPerSecond": 2500,
     "rocketDistanceMultiplier": 1.2,
     "tileKickDuration": 0.12,
     "tileKickDistance": 90,
@@ -672,7 +672,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "VerticalRocketSpecialTileView",
+    "_name": "VerticalRocketSpecialTileRegistrator",
     "_objFlags": 0,
     "_parent": {
       "__id__": 9
@@ -743,7 +743,7 @@
     "rocketSpriteFrame": {
       "__uuid__": "4410657d-d23e-470f-88bb-47916724f170"
     },
-    "rocketSpeedSecondsPerPixel": 2500,
+    "rocketSpeedPixelsPerSecond": 2500,
     "rocketDistanceMultiplier": 1.2,
     "tileKickDuration": 0.12,
     "tileKickDistance": 90,
@@ -753,7 +753,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "DynamiteSpecialTileView",
+    "_name": "DynamiteSpecialTileRegistrator",
     "_objFlags": 0,
     "_parent": {
       "__id__": 9
