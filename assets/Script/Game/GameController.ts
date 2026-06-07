@@ -1,4 +1,4 @@
-import { GameModel, GameConfig, GameState, MoveResult } from "../Core/GameModel";
+import { GameModel, GameConfig, GameState, MoveResult, MoveFailReason } from "../Core/GameModel";
 import { BoardView } from "../View/BoardView";
 import { TopHudView } from "../View/HUD/TopHudView";
 import { ResultPopupView } from "../View/HUD/ResultPopupView";
@@ -471,9 +471,9 @@ export class GameController extends cc.Component {
 }
 
     private HandleFailedMove(result: MoveResult): void {
-        // Пока ничего критичного не делаем.
-        // Позже здесь можно добавить shake тайла, звук ошибки или подсказку.
-
+        if (result.failReason == MoveFailReason.GroupTooSmall) { //Обрабатываем только игровой случай
+            this.boardView.PlayFailMove(result.tappedX, result.tappedY);
+        }
         cc.log("Move failed:", result.failReason);
     }
 

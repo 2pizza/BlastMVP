@@ -13,16 +13,16 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export class BoardView extends cc.Component implements SpecialTileAnimationHost {
     @property(cc.Node)
-    private boardRoot: cc.Node | null = null;
+    private boardRoot: cc.Node = null;
 
     @property(ScoreController)
-    private scoreController: ScoreController | null = null;
+    private scoreController: ScoreController = null;
 
     @property(cc.Node)
-    private boardBackground: cc.Node | null = null;
+    private boardBackground: cc.Node = null;
 
     @property(cc.Node)
-    private boardMask: cc.Node | null = null;
+    private boardMask: cc.Node = null;
     
 
     @property
@@ -34,7 +34,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
     
 
     @property(cc.Prefab)
-    private tilePrefab: cc.Prefab | null = null;
+    private tilePrefab: cc.Prefab = null;
 
     @property([cc.SpriteFrame])
     private tileSprites: cc.SpriteFrame[] = [];
@@ -202,6 +202,21 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
             this.selectedTileView = null;
         }
     }
+
+    public PlayFailMove(x:number, y:number):void {
+        const tile = this.board.GetTile(x, y);
+        if (tile === null) {
+            return;
+        }
+
+        const tileView = this.tileViewsById[tile.id];
+        if (tileView === undefined || tileView === null) {
+            return;
+        }       
+
+        tileView.PlayFailedMove();
+    }
+
 
     public ClearTileSelection(): void {
         if (this.selectedTileView !== null) {

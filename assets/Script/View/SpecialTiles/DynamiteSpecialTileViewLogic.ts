@@ -1,6 +1,7 @@
 import { RemovedTile, TurnResult } from "../../Core/BoardLogic";
 import { SpecialTileType } from "../../Core/TileModel";
 import { ScoreController, ScoreFlyPrefixTweenBuilder } from "../Animators/ScoreController";
+import { TileView } from "../TileView";
 import { SpecialTileAnimationHost, SpecialTileViewLogic } from "./SpecialTileViewLogic";
 
 interface DynamiteBlastPoint {
@@ -8,10 +9,6 @@ interface DynamiteBlastPoint {
     y: number;
     position: cc.Vec3;
     delay: number;
-}
-
-interface DynamitePreparedTiles {
-    scoreFlyTiles: RemovedTile[];
 }
 
 export class DynamiteSpecialTileViewLogic implements SpecialTileViewLogic {
@@ -54,10 +51,10 @@ export class DynamiteSpecialTileViewLogic implements SpecialTileViewLogic {
         const blastPoints = this.CreateBlastPoints(host, turn);
 
         this.PlayBlastPointAnimations(animationLayer, blastPoints);
-        this.PlayScoreFlyAnimations(host, scoreController, preparedTiles.scoreFlyTiles, blastPoints, onComplete);
+        this.PlayScoreFlyAnimations(host, scoreController, preparedTiles, blastPoints, onComplete);
     }
 
-    private PrepareRemovedTiles(host: SpecialTileAnimationHost, turn: TurnResult): DynamitePreparedTiles {
+    private PrepareRemovedTiles(host: SpecialTileAnimationHost, turn: TurnResult): RemovedTile[] {
         const scoreFlyTiles: RemovedTile[] = [];
 
         for (let i = 0; i < turn.removedTiles.length; i++) {
@@ -72,9 +69,7 @@ export class DynamiteSpecialTileViewLogic implements SpecialTileViewLogic {
             scoreFlyTiles.push(removed);
         }
 
-        return {
-            scoreFlyTiles: scoreFlyTiles,
-        };
+        return scoreFlyTiles;
     }
 
     private PlayScoreFlyAnimations(host: SpecialTileAnimationHost, scoreFlyController: ScoreController, scoreFlyTiles: RemovedTile[], blastPoints: DynamiteBlastPoint[], onComplete: () => void): void {
@@ -108,18 +103,9 @@ export class DynamiteSpecialTileViewLogic implements SpecialTileViewLogic {
                 completeBlockingTile();
             };
 
-            const prefixTween = this.CreateDynamiteHitPrefixTween(
-                host,
-                removed,
-                blastPoints,
-                completeTileBlocking
-            );
+            const prefixTween = this.CreateDynamiteHitPrefixTween(host, removed, blastPoints, completeTileBlocking);
 
-            scoreFlyController.PlayCustomStartScoreFlyAnimation(
-                removed,
-                prefixTween,
-                completeTileBlocking
-            );
+            scoreFlyController.PlayCustomStartScoreFlyAnimation(removed, prefixTween, completeTileBlocking);
         }
     }
 
@@ -229,12 +215,7 @@ export class DynamiteSpecialTileViewLogic implements SpecialTileViewLogic {
             }
         }
 
-        return {
-            minX: minX,
-            maxX: maxX,
-            minY: minY,
-            maxY: maxY,
-        };
+        return { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
     }
 
     private PlayBlastPointAnimations(layer: cc.Node, blastPoints: DynamiteBlastPoint[]): void {

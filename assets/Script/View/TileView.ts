@@ -16,7 +16,8 @@ export class TileView extends cc.Component {
     private tapCallback: (x: number, y: number) => void = null;
 
     private selectionTween: cc.Tween = null;
-    private basePosition: cc.Vec3 = null;
+    private failTween: cc.Tween = null;
+    private basePosition: cc.Vec2 = null;
 
     protected onLoad(): void {
         this.node.on(cc.Node.EventType.TOUCH_END, this.OnTouchEnd, this);
@@ -26,14 +27,7 @@ export class TileView extends cc.Component {
         this.node.off(cc.Node.EventType.TOUCH_END, this.OnTouchEnd, this);
     }
 
-    public Init(
-        tileId: number,
-        colorId: number,
-        boardX: number,
-        boardY: number,
-        spriteFrame: cc.SpriteFrame,
-        tapCallback: (x: number, y: number) => void
-    ): void {
+    public Init(tileId: number,colorId: number, boardX: number, boardY: number, spriteFrame: cc.SpriteFrame, tapCallback: (x: number, y: number) => void): void {
         this.tileId = tileId;
         this.colorId = colorId;
         this.boardX = boardX;
@@ -95,13 +89,13 @@ export class TileView extends cc.Component {
             return;
         }
 
-        this.StopSelectionAnimation();
+        this.StopAllAnimation();
     }
 
     private PlaySelectionAnimation(): void {
-        this.StopSelectionAnimation();
+        this.StopAllAnimation();
 
-        this.basePosition = this.node.position.clone();
+        this.basePosition = this.node.getPosition();
 
         this.selectionTween = cc.tween(this.node)
             .repeatForever(
@@ -114,16 +108,38 @@ export class TileView extends cc.Component {
             .start();
     }
 
-    private StopSelectionAnimation(): void {
+    public PlayFailedMove(): void {
+        this.StopAllAnimation();
+
+        this.basePosition = this.visualNode.getPosition();
+
+        this.failTween = cc.tween(this.visualNode)
+        .by(0.035, { x: -6, skewX: -4 })
+        .by(0.035, { x: 12, skewX: 8 })
+        .by(0.035, { x: -10, skewX: -7 })
+        .by(0.035, { x: 8, skewX: 5 })
+        .by(0.035, { x: -4, skewX: -2 })
+        .to(0.025, { skewX: 0 })
+        .start();
+    }
+
+    private StopAllAnimation(): void {
         if (this.selectionTween !== null) {
             this.selectionTween.stop();
             this.selectionTween = null;
         }
 
+        if (this.failTween !== null) {
+            this.failTween.stop();
+            this.failTween = null;
+        }
+
         if (this.basePosition !== null) {
-            this.node.position = this.basePosition;
+            this.visualNode.setPosition(this.basePosition);
             this.basePosition = null;
         }
+
+        this.visualNode.skewX = 0;
     }
 
     private OnTouchEnd(): void {
