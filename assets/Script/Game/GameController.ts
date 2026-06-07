@@ -272,7 +272,7 @@ export class GameController extends cc.Component {
 
         this.inputLocked = true;
 
-        this.boardView.PlayMoveResult(result, () => {
+        this.boardView.PlayMoveResult(result, false, () => {
             this.OnBoardAnimationComplete(result);
         });
     }
@@ -348,17 +348,12 @@ export class GameController extends cc.Component {
         this.currentBombBoosterCount--;
         this.UpdateBoostersHud();
 
-        this.boardView.PlayMoveResult(result, () => {
+        this.boardView.PlayMoveResult(result, false, () => {
             this.OnBoardAnimationComplete(result);
         });
     }
 
-    private UseSwapBooster(
-        firstX: number,
-        firstY: number,
-        secondX: number,
-        secondY: number
-    ): void {
+    private UseSwapBooster(firstX: number, firstY: number, secondX: number, secondY: number): void {
         if (this.game === null) {
             this.ResetBoosterSelection();
             return;
@@ -366,12 +361,7 @@ export class GameController extends cc.Component {
 
         this.ResetBoosterSelection();
 
-        const result = this.game.TryUseSwapBooster(
-            firstX,
-            firstY,
-            secondX,
-            secondY
-        );
+        const result = this.game.TryUseSwapBooster(firstX, firstY, secondX, secondY);
 
         if (!result.success) {
             this.HandleFailedMove(result);
@@ -383,7 +373,7 @@ export class GameController extends cc.Component {
         this.currentSwapBoosterCount--;
         this.UpdateBoostersHud();
 
-        this.boardView.PlayMoveResult(result, () => {
+        this.boardView.PlayMoveResult(result, true, () => {
             this.OnBoardAnimationComplete(result);
         });
     }
@@ -465,7 +455,7 @@ export class GameController extends cc.Component {
 
         const shuffleResult = this.game.TryShuffle();
 
-        this.boardView.PlayMoveResult(shuffleResult, () => {
+        this.boardView.PlayMoveResult(shuffleResult, false, () => {
             this.ResolveNoAvailableMoves(attempt + 1);
         });
 }

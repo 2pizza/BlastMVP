@@ -106,7 +106,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         this.ResizeBoardArea(board.width, board.height);
     }
 
-    public PlayMoveResult(result: MoveResult, onComplete: () => void): void {
+    public PlayMoveResult(result: MoveResult, shouldRiseTiles: boolean, onComplete: () => void): void {
         this.ClearTileSelection();
         
         if (!result.success) {
@@ -120,7 +120,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
 
         this.PlayTurns(result.turns, 0, () => {
             this.CreateCreatedTiles(result.createdTiles);
-            this.PlayMoveAnimation(result.movedTiles, () => {
+            this.PlayMoveAnimation(result.movedTiles, shouldRiseTiles, () => {
                 this.SortTileViewsByBoardOrder();
                 this.scheduleOnce(() => { onComplete();}, 0.25);
             });
@@ -148,29 +148,17 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         const localY = localPosition.y - bottom;
 
         if (localX < 0 || localY < 0 || localX >= boardWidth || localY >= boardHeight) {
-            return {
-                success: false,
-                x: -1,
-                y: -1,
-            };
+            return { success: false, x: -1, y: -1 };
         }
 
         const x = Math.floor(localX / this.cellSize);
         const y = Math.floor(localY / this.cellSize);
 
         if (!this.board.IsInside(x, y)) {
-            return {
-                success: false,
-                x: -1,
-                y: -1,
-            };
+            return { success: false, x: -1, y: -1 };
         }
 
-        return {
-            success: true,
-            x: x,
-            y: y,
-        };
+        return { success: true, x: x, y: y };
     }
 
     public SetTileSelected(x: number, y: number, selected: boolean): void {
@@ -179,13 +167,11 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         }
 
         const tile = this.board.GetTile(x, y);
-
         if (tile === null) {
             return;
         }
 
         const tileView = this.tileViewsById[tile.id];
-
         if (tileView === undefined || tileView === null) {
             return;
         }
@@ -330,7 +316,7 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
         onComplete();
     }
 
-    private PlayMoveAnimation(movedTiles: MovedTile[], onComplete: () => void): void {
+    private PlayMoveAnimation(movedTiles: MovedTile[], shouldRiseTiles:boolean, onComplete: () => void): void {
         if (movedTiles.length <= 0) {
             onComplete();
             return;
@@ -352,6 +338,11 @@ export class BoardView extends cc.Component implements SpecialTileAnimationHost 
 
                 continue;
             }
+            
+            if (shouldRiseTiles) {
+                tileView.node.setSiblingIndex(tileView.node.parent.childrenCount - 1);
+            }
+
 
             this.PlaySingleTileMove(tileView, moved, () => {
                 completedCount++;

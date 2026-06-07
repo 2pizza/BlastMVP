@@ -95,9 +95,9 @@ export class TileView extends cc.Component {
     private PlaySelectionAnimation(): void {
         this.StopAllAnimation();
 
-        this.basePosition = this.node.getPosition();
+        this.basePosition = this.visualNode.getPosition();
 
-        this.selectionTween = cc.tween(this.node)
+        this.selectionTween = cc.tween(this.visualNode)
             .repeatForever(
                 cc.tween()
                     .by(0.04, { x: 2 })
